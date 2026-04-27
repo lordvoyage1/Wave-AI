@@ -33,22 +33,95 @@
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&family=Space+Grotesk:wght@500;600;700&display=swap" rel="stylesheet" />
     <!-- Prevent flash of wrong styles: use app's light bg immediately -->
     <style>
-      html, body { margin: 0; padding: 0; font-family: Inter, system-ui, sans-serif; }
+      html, body { margin: 0; padding: 0; font-family: Inter, system-ui, sans-serif; background: #f8f9fc; }
       #root { min-height: 100dvh; background: #f8f9fc; }
-      /* Ensure instant tap response globally */
       * { -webkit-tap-highlight-color: transparent; touch-action: manipulation; }
+
+      #wave-boot {
+        position: fixed; inset: 0;
+        display: flex; flex-direction: column; align-items: center; justify-content: center;
+        gap: 18px; background: #f8f9fc; z-index: 99999;
+        transition: opacity 0.35s ease;
+      }
+      #wave-boot.fade { opacity: 0; pointer-events: none; }
+      #wave-boot .orb {
+        width: 64px; height: 64px; border-radius: 50%;
+        background-image: url('/orb.png');
+        background-size: cover; background-position: center;
+        box-shadow: 0 0 24px rgba(79,127,255,0.32), 0 8px 22px rgba(0,0,0,0.12);
+        animation: bootFloat 3s ease-in-out infinite;
+      }
+      #wave-boot .ring {
+        position: absolute; width: 92px; height: 92px; border-radius: 50%;
+        border: 1.5px solid rgba(155,92,255,0.28);
+        animation: bootPulse 2.4s ease-in-out infinite;
+      }
+      #wave-boot .dots { display: flex; gap: 6px; margin-top: 4px; }
+      #wave-boot .dots span {
+        width: 7px; height: 7px; border-radius: 50%;
+        background: linear-gradient(135deg,#4f7fff,#9b5cff);
+        animation: bootDot 1.2s ease-in-out infinite;
+      }
+      #wave-boot .dots span:nth-child(2) { animation-delay: 0.18s; }
+      #wave-boot .dots span:nth-child(3) { animation-delay: 0.36s; }
+      #wave-boot .label {
+        font-size: 12px; color: #94a3b8; letter-spacing: 0.04em;
+        font-weight: 500;
+      }
+      @keyframes bootFloat {
+        0%,100% { transform: translateY(0) scale(1); }
+        50% { transform: translateY(-6px) scale(1.04); }
+      }
+      @keyframes bootPulse {
+        0%,100% { transform: scale(0.92); opacity: 0.55; }
+        50% { transform: scale(1.08); opacity: 0; }
+      }
+      @keyframes bootDot {
+        0%,100% { transform: translateY(0); opacity: 0.4; }
+        40% { transform: translateY(-4px); opacity: 1; }
+      }
     </style>
   </head>
   <body>
     <div id="root"></div>
+    <div id="wave-boot" aria-hidden="true">
+      <div style="position:relative;display:flex;align-items:center;justify-content:center;">
+        <div class="ring"></div>
+        <div class="orb"></div>
+      </div>
+      <div class="dots"><span></span><span></span><span></span></div>
+      <div class="label">Loading Wave AI</div>
+    </div>
     <script type="module" src="/src/main.tsx"></script>
-    <!-- PWA service worker registration -->
     <script>
-      if ('serviceWorker' in navigator) {
-        window.addEventListener('load', () => {
-          navigator.serviceWorker.register('/sw.js').catch(() => {});
-        });
-      }
+      // PWA service worker — production only.
+      // In dev, SW caches break Vite HMR and serve stale bundles.
+      (function () {
+        if (!('serviceWorker' in navigator)) return;
+        var h = location.hostname;
+        var isDev =
+          h === 'localhost' ||
+          h === '127.0.0.1' ||
+          h.endsWith('.replit.dev') ||
+          h.endsWith('.repl.co') ||
+          h.endsWith('.spock.replit.dev') ||
+          h.endsWith('.kirk.replit.dev') ||
+          h.endsWith('.picard.replit.dev');
+        if (isDev) {
+          navigator.serviceWorker.getRegistrations()
+            .then(function (rs) { rs.forEach(function (r) { r.unregister(); }); })
+            .catch(function () {});
+          if (window.caches) {
+            caches.keys()
+              .then(function (keys) { keys.forEach(function (k) { caches.delete(k); }); })
+              .catch(function () {});
+          }
+        } else {
+          window.addEventListener('load', function () {
+            navigator.serviceWorker.register('/sw.js').catch(function () {});
+          });
+        }
+      })();
     </script>
   </body>
 </html>

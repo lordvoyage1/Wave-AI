@@ -1,6 +1,6 @@
 
 import React, { useEffect, useRef, useState, useCallback } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, Navigate } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
 
 const PHRASES = [
@@ -189,17 +189,12 @@ export default function Landing() {
     return () => window.removeEventListener("resize", calc);
   }, []);
 
-  // Instant redirect if already signed in
-  useEffect(() => {
-    if (user) navigate("/app", { replace: true });
-  }, [user, navigate]);
-
-  // Skip rendering if redirecting
-  if (user) return null;
-
   const handleStart = useCallback(() => {
     navigate("/login");
   }, [navigate]);
+
+  // Synchronous redirect if signed in — no blank flash
+  if (user) return <Navigate to="/app" replace />;
 
   return (
     <div

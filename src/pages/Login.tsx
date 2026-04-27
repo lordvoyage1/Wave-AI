@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from "react";
-import { Link, useNavigate } from "react-router-dom";
+import { Link, useNavigate, Navigate } from "react-router-dom";
 import { Eye, EyeOff, Mail, Lock, LogIn, ChevronLeft } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useAuth } from "@/contexts/AuthContext";
@@ -68,12 +68,8 @@ export default function LoginPage() {
     if (state.email) setEmail(state.email);
   }, []);
 
-  // Redirect if already signed in
-  useEffect(() => {
-    if (user) navigate("/app", { replace: true });
-  }, [user, navigate]);
-
-  if (user) return null;
+  // Synchronous redirect if signed in — no blank flash
+  if (user) return <Navigate to="/app" replace />;
 
   const canSubmit = !submitting && email.trim().length > 0 && password.length >= 6;
 

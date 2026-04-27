@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, Navigate } from "react-router-dom";
 import {
   ChevronLeft, User, Mail, Lock, Save, CheckCircle2,
   MessageSquare, BarChart3,
@@ -120,10 +120,7 @@ export default function Profile() {
     setTimeout(() => setSaved(false), 2500);
   };
 
-  if (!user) {
-    navigate("/auth", { replace: true });
-    return null;
-  }
+  if (!user) return <Navigate to="/login" replace />;
 
   return (
     <div className="min-h-[100dvh] bg-[#f8f9fc] pb-12">

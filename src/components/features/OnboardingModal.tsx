@@ -224,7 +224,6 @@ export default function OnboardingModal({ onDone }: OnboardingModalProps) {
                 <button
                   key={s.id}
                   onClick={() => goTo(i)}
-                  style={{ touchAction: "manipulation" }}
                   className={cn(
                     "transition-all duration-300 flex items-center justify-center rounded-full",
                     i === step
@@ -233,13 +232,14 @@ export default function OnboardingModal({ onDone }: OnboardingModalProps) {
                       ? "w-6 h-6"
                       : "w-5 h-5 bg-slate-200"
                   )}
-                  style={
-                    i === step
+                  style={{
+                    touchAction: "manipulation",
+                    ...(i === step
                       ? { background: "linear-gradient(135deg,#4f7fff,#9b5cff)" }
                       : i < step
                       ? { background: "linear-gradient(135deg,#4f7fff60,#9b5cff60)" }
-                      : {}
-                  }
+                      : {}),
+                  }}
                 >
                   <StepIcon
                     size={i === step ? 13 : 10}
