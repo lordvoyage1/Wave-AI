@@ -1,0 +1,17 @@
+{
+  "name": "Wave AI",
+  "short_name": "Wave AI",
+  "description": "Advanced AI Intelligence by Wave Platforms, Inc.",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#060c1a",
+  "theme_color": "#060c1a",
+  "orientation": "portrait-primary",
+  "icons": [
+    { "src": "/favicon-alva.jpg", "sizes": "192x192", "type": "image/jpeg" },
+    { "src": "/orb.png",          "sizes": "512x512", "type": "image/png" },
+    { "src": "/orb.png",          "sizes": "any",     "type": "image/png", "purpose": "maskable any" }
+  ],
+  "categories": ["productivity", "utilities"],
+  "screenshots": []
+}

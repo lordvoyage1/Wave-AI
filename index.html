@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <link rel="icon" type="image/png" href="/orb.png" />
+    <link rel="apple-touch-icon" href="/orb.png" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" />
+    <meta name="mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+    <meta name="apple-mobile-web-app-title" content="Wave AI" />
+    <meta name="theme-color" content="#060c1a" />
+    <title>Wave AI — Advanced Intelligence</title>
+    <meta name="description" content="Wave AI — the most capable AI assistant. Chat, code, create images, generate videos, synthesize voice, analyze files. Built by Wave Platforms, Inc." />
+    <meta name="keywords" content="Wave AI, AI assistant, artificial intelligence, Wave Platforms, image generation, video generation, code AI, East Africa" />
+    <meta property="og:type" content="website" />
+    <meta property="og:title" content="Wave AI — Advanced Intelligence" />
+    <meta property="og:description" content="One platform. Every AI capability. Chat, code, images, video, voice, vision — all in one conversation." />
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:title" content="Wave AI" />
+    <meta name="twitter:description" content="Advanced AI assistant by Wave Platforms, Inc." />
+    <!-- PWA manifest -->
+    <link rel="manifest" href="/manifest.json" />
+    <!-- Preconnect to AI APIs for zero-latency first request -->
+    <link rel="preconnect" href="https://api.princetechn.com" />
+    <link rel="preconnect" href="https://apis.xcasper.space" />
+    <link rel="preconnect" href="https://apiskeith.top" />
+    <link rel="dns-prefetch" href="https://api.princetechn.com" />
+    <link rel="dns-prefetch" href="https://apis.xcasper.space" />
+    <link rel="dns-prefetch" href="https://apiskeith.top" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&family=Space+Grotesk:wght@500;600;700&display=swap" rel="stylesheet" />
+    <!-- Prevent flash of wrong styles: use app's light bg immediately -->
+    <style>
+      html, body { margin: 0; padding: 0; font-family: Inter, system-ui, sans-serif; }
+      #root { min-height: 100dvh; background: #f8f9fc; }
+      /* Ensure instant tap response globally */
+      * { -webkit-tap-highlight-color: transparent; touch-action: manipulation; }
+    </style>
+  </head>
+  <body>
+    <div id="root"></div>
+    <script type="module" src="/src/main.tsx"></script>
+    <!-- PWA service worker registration -->
+    <script>
+      if ('serviceWorker' in navigator) {
+        window.addEventListener('load', () => {
+          navigator.serviceWorker.register('/sw.js').catch(() => {});
+        });
+      }
+    </script>
+  </body>
+</html>
