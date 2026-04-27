@@ -22,4 +22,16 @@ export default defineConfig({
       "@": path.resolve(__dirname, "./src"),
     },
   },
+  build: {
+    chunkSizeWarningLimit: 700,
+    rollupOptions: {
+      output: {
+        manualChunks: {
+          "react-vendor": ["react", "react-dom", "react-router-dom"],
+          "ui-vendor": ["lucide-react", "sonner"],
+          "supabase": ["@supabase/supabase-js"],
+        },
+      },
+    },
+  },
 });

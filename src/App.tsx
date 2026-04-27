@@ -3,17 +3,28 @@ import { BrowserRouter, Routes, Route, Navigate, useLocation } from "react-route
 import { Toaster } from "sonner";
 import { AuthProvider, useAuth } from "@/contexts/AuthContext";
 import Landing from "@/pages/Landing";
-import Home from "@/pages/Home";
 import LoginPage from "@/pages/Login";
 import SignupPage from "@/pages/Signup";
 import { PageLoader } from "@/components/features/PageLoader";
 
-// Secondary pages are lazy — they're never needed at startup
+/* ── Lazy routes ──────────────────────────────────────────────────────
+   Home is the heaviest page (chat UI + Three.js orb + many features). We
+   lazy-load it so the initial bundle is small (Landing/Login/Signup load
+   fast). Landing prefetches the Home chunk in the background so by the time
+   the user clicks "Get Started", Home is already in cache. */
+const Home     = lazy(() => import("@/pages/Home"));
 const About    = lazy(() => import("@/pages/About"));
 const ApiDocs  = lazy(() => import("@/pages/ApiDocs"));
 const Profile  = lazy(() => import("@/pages/Profile"));
 const Terms    = lazy(() => import("@/pages/Terms"));
 const NotFound = lazy(() => import("@/pages/NotFound"));
+
+/* Prefetch Home as soon as Landing/Login/Signup render so the chunk is
+   warm before the user navigates. */
+function prefetchHome() {
+  // Browsers will dedupe; calling import() simply triggers chunk fetch.
+  import("@/pages/Home").catch(() => {});
+}
 
 /* ── Lightweight page spinner for lazy-loaded secondary routes ────────── */
 function PageSpinner() {
@@ -84,8 +95,7 @@ class ErrorBoundary extends Component<{ children: React.ReactNode }, EBState> {
 }
 
 /**
- * /app — renders Home. Home handles guest vs signed-in internally.
- * No lazy loading for Home — guests need it instantly without a network round-trip.
+ * /app — renders Home (lazy). Home handles guest vs signed-in internally.
  */
 function AppRoute({ children }: { children: React.ReactNode }) {
   return <ErrorBoundary>{children}</ErrorBoundary>;
@@ -93,10 +103,11 @@ function AppRoute({ children }: { children: React.ReactNode }) {
 
 /**
  * /login and /signup — redirect to /app if already signed in.
- * No spinner — auth state is synchronous.
+ * Also prefetches the Home chunk so post-auth navigation is instant.
  */
 function AuthGuard({ children }: { children: React.ReactNode }) {
   const { user } = useAuth();
+  useEffect(() => { prefetchHome(); }, []);
   if (user) return <Navigate to="/app" replace />;
   return <>{children}</>;
 }
@@ -110,14 +121,20 @@ function ProfileGuard({ children }: { children: React.ReactNode }) {
   return <>{children}</>;
 }
 
+/* Wrapper around Landing that warms the Home chunk in the background. */
+function LandingWithPrefetch() {
+  useEffect(() => { prefetchHome(); }, []);
+  return <Landing />;
+}
+
 /* ── Routes ────────────────────────────────────────────────────────── */
 function AppRoutes() {
   return (
     <PageLoader>
       <ScrollTop />
       <Routes>
-          <Route path="/"        element={<Landing />} />
-          <Route path="/app"     element={<AppRoute><Home /></AppRoute>} />
+          <Route path="/"        element={<LandingWithPrefetch />} />
+          <Route path="/app"     element={<AppRoute><Suspense fallback={<PageSpinner />}><Home /></Suspense></AppRoute>} />
           <Route path="/login"   element={<AuthGuard><LoginPage /></AuthGuard>} />
           <Route path="/signup"  element={<AuthGuard><SignupPage /></AuthGuard>} />
           {/* Legacy /auth → /login redirect */}
