@@ -1,4 +1,4 @@
-const CACHE = 'wave-ai-v5';
+const CACHE = 'wave-ai-v6';
 const OFFLINE_URLS = ['/'];
 
 // ── Install: pre-cache shell ─────────────────────────────────────────────────

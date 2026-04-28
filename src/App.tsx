@@ -1,38 +1,37 @@
-import React, { Suspense, lazy, useEffect, Component } from "react";
+import React, { Suspense, lazy, useEffect, useState, Component } from "react";
 import { BrowserRouter, Routes, Route, Navigate, useLocation } from "react-router-dom";
 import { Toaster } from "sonner";
 import { AuthProvider, useAuth } from "@/contexts/AuthContext";
 import Landing from "@/pages/Landing";
 import LoginPage from "@/pages/Login";
 import SignupPage from "@/pages/Signup";
+import Home from "@/pages/Home";
 import { PageLoader } from "@/components/features/PageLoader";
 
-/* ── Lazy routes ──────────────────────────────────────────────────────
-   Home is the heaviest page (chat UI + Three.js orb + many features). We
-   lazy-load it so the initial bundle is small (Landing/Login/Signup load
-   fast). Landing prefetches the Home chunk in the background so by the time
-   the user clicks "Get Started", Home is already in cache. */
-const Home     = lazy(() => import("@/pages/Home"));
+/* Secondary routes stay lazy — they're rarely visited. Home is bundled
+   eagerly so /app renders instantly with no Suspense spinner ever. */
 const About    = lazy(() => import("@/pages/About"));
 const ApiDocs  = lazy(() => import("@/pages/ApiDocs"));
 const Profile  = lazy(() => import("@/pages/Profile"));
 const Terms    = lazy(() => import("@/pages/Terms"));
 const NotFound = lazy(() => import("@/pages/NotFound"));
 
-/* Prefetch Home as soon as Landing/Login/Signup render so the chunk is
-   warm before the user navigates. */
-function prefetchHome() {
-  // Browsers will dedupe; calling import() simply triggers chunk fetch.
-  import("@/pages/Home").catch(() => {});
-}
-
-/* ── Lightweight page spinner for lazy-loaded secondary routes ────────── */
+/* ── Lightweight page spinner for lazy-loaded secondary routes ──────────
+   Includes a "stuck" recovery: if the chunk is still loading after 6s
+   (slow network, stale cache, etc.) we show a refresh button so the user
+   never sees an infinite spinner with no escape. */
 function PageSpinner() {
+  const [stuck, setStuck] = useState(false);
+  useEffect(() => {
+    const t = setTimeout(() => setStuck(true), 6000);
+    return () => clearTimeout(t);
+  }, []);
+
   return (
     <div style={{
       minHeight: "100dvh", display: "flex", flexDirection: "column",
       alignItems: "center", justifyContent: "center", gap: 16,
-      background: "#f8f9fc",
+      background: "#f8f9fc", padding: 24, textAlign: "center",
     }}>
       <img src="/orb.png" alt="Wave AI" style={{ width: 52, height: 52, borderRadius: "50%", animation: "orbFloat 3s ease-in-out infinite", boxShadow: "0 0 20px rgba(79,127,255,0.3)" }} />
       <div style={{ display: "flex", gap: 6 }}>
@@ -40,6 +39,32 @@ function PageSpinner() {
           <span key={i} className="typing-dot" style={{ width: 8, height: 8, borderRadius: "50%", background: "linear-gradient(135deg,#4f7fff,#9b5cff)", animationDelay: `${i * 0.2}s` }} />
         ))}
       </div>
+      {stuck && (
+        <>
+          <p style={{ fontSize: 12, color: "#94a3b8", maxWidth: 260, lineHeight: 1.5, marginTop: 4 }}>
+            Taking longer than usual. Your network may be slow.
+          </p>
+          <button
+            onClick={() => {
+              if ("serviceWorker" in navigator) {
+                navigator.serviceWorker.getRegistrations()
+                  .then(rs => Promise.all(rs.map(r => r.unregister())))
+                  .catch(() => {})
+                  .finally(() => window.location.reload());
+              } else {
+                window.location.reload();
+              }
+            }}
+            style={{
+              background: "linear-gradient(135deg,#4f7fff,#9b5cff)",
+              color: "#fff", border: "none", borderRadius: 10, padding: "8px 20px",
+              fontSize: 12, fontWeight: 600, cursor: "pointer", minHeight: 38,
+            }}
+          >
+            Reload
+          </button>
+        </>
+      )}
     </div>
   );
 }
@@ -103,11 +128,9 @@ function AppRoute({ children }: { children: React.ReactNode }) {
 
 /**
  * /login and /signup — redirect to /app if already signed in.
- * Also prefetches the Home chunk so post-auth navigation is instant.
  */
 function AuthGuard({ children }: { children: React.ReactNode }) {
   const { user } = useAuth();
-  useEffect(() => { prefetchHome(); }, []);
   if (user) return <Navigate to="/app" replace />;
   return <>{children}</>;
 }
@@ -121,20 +144,14 @@ function ProfileGuard({ children }: { children: React.ReactNode }) {
   return <>{children}</>;
 }
 
-/* Wrapper around Landing that warms the Home chunk in the background. */
-function LandingWithPrefetch() {
-  useEffect(() => { prefetchHome(); }, []);
-  return <Landing />;
-}
-
 /* ── Routes ────────────────────────────────────────────────────────── */
 function AppRoutes() {
   return (
     <PageLoader>
       <ScrollTop />
       <Routes>
-          <Route path="/"        element={<LandingWithPrefetch />} />
-          <Route path="/app"     element={<AppRoute><Suspense fallback={<PageSpinner />}><Home /></Suspense></AppRoute>} />
+          <Route path="/"        element={<Landing />} />
+          <Route path="/app"     element={<AppRoute><Home /></AppRoute>} />
           <Route path="/login"   element={<AuthGuard><LoginPage /></AuthGuard>} />
           <Route path="/signup"  element={<AuthGuard><SignupPage /></AuthGuard>} />
           {/* Legacy /auth → /login redirect */}

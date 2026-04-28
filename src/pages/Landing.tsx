@@ -193,10 +193,6 @@ export default function Landing() {
     navigate("/login");
   }, [navigate]);
 
-  const handleGuest = useCallback(() => {
-    navigate("/app");
-  }, [navigate]);
-
   // Synchronous redirect if signed in — no blank flash
   if (user) return <Navigate to="/app" replace />;
 
@@ -294,43 +290,6 @@ export default function Landing() {
             }}
           />
           Chat With Me Now
-        </button>
-
-        <button
-          onClick={handleGuest}
-          style={{
-            marginTop: 14,
-            background: "transparent",
-            padding: "10px 22px",
-            fontSize: "clamp(0.78rem, 2.5vw, 0.85rem)",
-            borderRadius: 12,
-            fontWeight: 500,
-            color: "rgba(255,255,255,0.55)",
-            border: "1px solid rgba(255,255,255,0.12)",
-            cursor: "pointer",
-            minHeight: 40,
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "center",
-            gap: 6,
-            transition: "color 0.15s, border-color 0.15s, background 0.15s",
-            WebkitTapHighlightColor: "transparent",
-            touchAction: "manipulation",
-          }}
-          onMouseEnter={e => {
-            const el = e.currentTarget as HTMLButtonElement;
-            el.style.color = "rgba(255,255,255,0.85)";
-            el.style.borderColor = "rgba(255,255,255,0.25)";
-            el.style.background = "rgba(255,255,255,0.04)";
-          }}
-          onMouseLeave={e => {
-            const el = e.currentTarget as HTMLButtonElement;
-            el.style.color = "rgba(255,255,255,0.55)";
-            el.style.borderColor = "rgba(255,255,255,0.12)";
-            el.style.background = "transparent";
-          }}
-        >
-          Continue as guest
         </button>
       </div>
 
