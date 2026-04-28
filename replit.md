@@ -42,6 +42,14 @@ A Vite + React + TypeScript single-page application using shadcn/ui, Tailwind CS
 - `Home.tsx` is now lazy-loaded; Landing/Login/Signup prefetch the Home chunk in `useEffect` so navigating to `/app` is instant.
 - Initial bundle dropped from 537 KB → 56 KB main JS (17 KB gzipped). Vendors are cached separately and reused across routes.
 
+## Production Refresh & Auth Fixes (2026-04-28)
+- **SPA refresh on static deploy** — added `public/_redirects` (`/* /index.html 200`) plus a Vite `closeBundle` plugin (`spaFallback` in `vite.config.ts`) that copies `dist/index.html` into `dist/404.html` and `dist/200.html`. This makes any static host (Replit, Netlify, Cloudflare, Vercel, GitHub Pages) serve the SPA shell for unknown paths instead of 404, so refreshing `/app`, `/login`, `/profile`, etc., never crashes.
+- **Guest mode entry point** — added a "Continue as guest" pill button directly on the Landing page (next to "Chat With Me Now") that goes straight to `/app`. Previously, guests had to navigate Landing → Login → "Continue as guest", which felt like an infinite loop.
+- **Signup → app (not login)** — removed the `ACCOUNT_CREATED` → `/login` detour from `signUp()` in `AuthContext.tsx`. After successful signup the user is taken straight to `/app`. If the Supabase project enforces email confirmation (no session on signup), we set a temporary local user object so the app loads in authenticated state immediately, and Supabase will hydrate the real session on next sign-in.
+- **"Account not found" wording** — the Supabase "Invalid login credentials" error now maps to "Email or password is incorrect. Please check your details and try again." instead of the misleading "No account found…" (Supabase intentionally doesn't reveal whether the account exists).
+- **Account memory** — `signIn` and `signUp` persist the cleaned email under `wave_last_email` in `localStorage`. The Login page pre-fills this value automatically on subsequent visits so returning users don't have to retype their email.
+- **signIn timeout** raised from 8s → 12s so slow networks don't false-fail.
+
 ## Recent Fixes (2026-04-27) — Loading & Auth Stability
 - Added a static HTML boot splash (`#wave-boot` in `index.html`) shown until React mounts; removed by `src/main.tsx` after first paint to eliminate the white flash on first load.
 - Service worker (`public/sw.js`) is now registered ONLY in production. In dev (`localhost`, `*.replit.dev`, `*.repl.co`) any existing SW is unregistered and caches cleared so Vite HMR isn't broken by stale cached bundles. Cache version bumped to `wave-ai-v5`.

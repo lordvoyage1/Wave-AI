@@ -61,11 +61,18 @@ export default function LoginPage() {
     return () => { mountedRef.current = false; };
   }, []);
 
-  // Pre-fill email if navigated from signup with state
+  // Pre-fill email — first from navigation state, otherwise from the
+  // last-used email (so returning users don't have to retype).
   useEffect(() => {
-    // react-router-dom location state
     const state = (window.history.state?.usr as { email?: string }) || {};
-    if (state.email) setEmail(state.email);
+    if (state.email) {
+      setEmail(state.email);
+      return;
+    }
+    try {
+      const saved = localStorage.getItem("wave_last_email");
+      if (saved) setEmail(saved);
+    } catch { /* ignore */ }
   }, []);
 
   // Synchronous redirect if signed in — no blank flash

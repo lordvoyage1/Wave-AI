@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useRef } from "react";
 import { Link, useNavigate, Navigate } from "react-router-dom";
 import { Eye, EyeOff, Mail, Lock, User, ArrowRight, ChevronLeft, AlertCircle, LogIn } from "lucide-react";
+import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 import { useAuth } from "@/contexts/AuthContext";
 
@@ -54,7 +55,6 @@ export default function SignupPage() {
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [emailTaken, setEmailTaken] = useState(false);
-  const [success, setSuccess] = useState(false);
   const mountedRef = useRef(true);
 
   const { signUp, user } = useAuth();
@@ -66,7 +66,7 @@ export default function SignupPage() {
   }, []);
 
   // Synchronous redirect if signed in — no blank flash
-  if (user && !success) return <Navigate to="/app" replace />;
+  if (user) return <Navigate to="/app" replace />;
 
   const strength =
     password.length === 0 ? 0 :
@@ -98,45 +98,21 @@ export default function SignupPage() {
       if (!mountedRef.current) return;
 
       if (err) {
-        // Email already registered — show inline card instead of redirect
         if (err.toLowerCase().includes("already")) {
           setEmailTaken(true);
-          return;
-        }
-        // Account created but auto-login needs user to sign in manually
-        if (err === "ACCOUNT_CREATED") {
-          setSuccess(true);
-          setTimeout(() => navigate("/login", { replace: true }), 2000);
           return;
         }
         setError(err);
         return;
       }
 
-      // Success — onAuthStateChange fires → AuthGuard redirects to /app
-      // navigate here too as a safety net
+      // Account created — go straight into the app.
+      toast.success("Welcome to Wave AI", { duration: 2500 });
       navigate("/app", { replace: true });
     } finally {
       if (mountedRef.current) setSubmitting(false);
     }
   };
-
-  if (success) {
-    return (
-      <div className="min-h-[100dvh] bg-[#f8f9fc] flex flex-col items-center justify-center px-4">
-        <div className="w-full max-w-[380px] text-center">
-          <div className="flex justify-center mb-5"><AuthOrb /></div>
-          <h2 className="text-xl font-bold text-slate-800 mb-2">Account created!</h2>
-          <p className="text-sm text-slate-500 mb-1">Taking you to sign in…</p>
-          <div className="flex justify-center mt-4">
-            <span className="flex gap-1.5">
-              {[0,1,2].map(i => <span key={i} className="w-2 h-2 rounded-full bg-primary typing-dot" />)}
-            </span>
-          </div>
-        </div>
-      </div>
-    );
-  }
 
   return (
     <div className="min-h-[100dvh] bg-[#f8f9fc] flex flex-col items-center justify-center px-4 py-10">

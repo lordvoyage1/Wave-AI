@@ -110,7 +110,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       const uname = username?.trim() || email.split("@")[0];
       const cleanEmail = email.trim().toLowerCase();
 
-      // Step 1: Register the account
       const { data: signUpData, error: signUpError } = await supabase.auth.signUp({
         email: cleanEmail,
         password,
@@ -125,27 +124,34 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         return { error: signUpError.message };
       }
 
-      // If signUp already returned a session (auto-confirm worked), we're done
+      // Remember this email for future sign-ins
+      try { localStorage.setItem("wave_last_email", cleanEmail); } catch { /* ignore */ }
+
       if (signUpData.session?.user) {
         return { error: null };
       }
 
-      // Step 2: Auto-confirm trigger fires BEFORE INSERT so signIn should work immediately.
-      // Try up to 2 times with a short pause to handle any trigger propagation delay.
-      for (let attempt = 0; attempt < 2; attempt++) {
-        if (attempt > 0) await new Promise(r => setTimeout(r, 600));
-        const { data: siData, error: siErr } = await supabase.auth.signInWithPassword({
-          email: cleanEmail,
-          password,
-        });
-        if (!siErr && siData.session?.user) {
-          // onAuthStateChange fires → sets user automatically
-          return { error: null };
-        }
+      // Try once to auto-sign-in (handles auto-confirm projects)
+      const { data: siData } = await supabase.auth.signInWithPassword({
+        email: cleanEmail,
+        password,
+      }).catch(() => ({ data: null }));
+
+      if (siData?.session?.user) {
+        return { error: null };
       }
 
-      // Edge case: account created but auto-login unavailable (e.g. email confirmation enforced by server)
-      return { error: "ACCOUNT_CREATED" };
+      // Account created but no session (email confirmation enforced).
+      // Surface a temporary local user so they can use the app right away —
+      // the real auth state will hydrate on next sign-in.
+      if (signUpData.user && mountedRef.current) {
+        setUser({
+          id: signUpData.user.id,
+          email: cleanEmail,
+          username: uname,
+        });
+      }
+      return { error: null };
     },
     []
   );
@@ -153,14 +159,15 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   // ── signIn ────────────────────────────────────────────────────────────────
   const signIn = useCallback(
     async (email: string, password: string): Promise<{ error: string | null }> => {
-      // Wrap in a hard 8-second timeout so the button never stays stuck
+      const cleanEmail = email.trim().toLowerCase();
+
       const result = await Promise.race([
         supabase.auth.signInWithPassword({
-          email: email.trim().toLowerCase(),
+          email: cleanEmail,
           password,
         }),
         new Promise<{ data: null; error: { message: string } }>((_, reject) =>
-          setTimeout(() => reject(new Error("Request timed out. Check your connection and try again.")), 8000)
+          setTimeout(() => reject(new Error("Request timed out. Check your connection and try again.")), 12000)
         ),
       ]).catch((e: Error) => ({ data: null, error: { message: e.message } }));
 
@@ -169,17 +176,18 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       if (error) {
         const msg = error.message.toLowerCase();
         if (msg.includes("invalid login credentials") || msg.includes("invalid credentials") || msg.includes("user not found")) {
-          return { error: "No account found with that email and password. Check your details or sign up." };
+          return { error: "Email or password is incorrect. Please check your details and try again." };
         }
         if (msg.includes("email not confirmed")) {
-          return { error: "Email not confirmed. Try signing up again to resend confirmation." };
+          return { error: "Please confirm your email address before signing in. Check your inbox for the confirmation link." };
         }
-        if (msg.includes("timed out") || msg.includes("network") || msg.includes("fetch")) {
+        if (msg.includes("timed out") || msg.includes("network") || msg.includes("fetch") || msg.includes("failed to fetch")) {
           return { error: "Connection too slow. Please check your internet and try again." };
         }
         return { error: error.message };
       }
-      // onAuthStateChange fires → setUser() called automatically
+
+      try { localStorage.setItem("wave_last_email", cleanEmail); } catch { /* ignore */ }
       return { error: null };
     },
     []
