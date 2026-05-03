@@ -10,11 +10,14 @@ import { PageLoader } from "@/components/features/PageLoader";
 
 /* Secondary routes stay lazy — they're rarely visited. Home is bundled
    eagerly so /app renders instantly with no Suspense spinner ever. */
-const About    = lazy(() => import("@/pages/About"));
-const ApiDocs  = lazy(() => import("@/pages/ApiDocs"));
-const Profile  = lazy(() => import("@/pages/Profile"));
-const Terms    = lazy(() => import("@/pages/Terms"));
-const NotFound = lazy(() => import("@/pages/NotFound"));
+const About        = lazy(() => import("@/pages/About"));
+const ApiDocs      = lazy(() => import("@/pages/ApiDocs"));
+const Profile      = lazy(() => import("@/pages/Profile"));
+const Terms        = lazy(() => import("@/pages/Terms"));
+const NotFound     = lazy(() => import("@/pages/NotFound"));
+const Settings     = lazy(() => import("@/pages/settings/Settings"));
+const AdminDash    = lazy(() => import("@/pages/admin/Dashboard"));
+const Architecture = lazy(() => import("@/pages/docs/Architecture"));
 
 /* ── Lightweight page spinner for lazy-loaded secondary routes ──────────
    Includes a "stuck" recovery: if the chunk is still loading after 6s
@@ -159,8 +162,11 @@ function AppRoutes() {
           <Route path="/profile" element={<ProfileGuard><Suspense fallback={<PageSpinner />}><Profile /></Suspense></ProfileGuard>} />
           <Route path="/about"   element={<Suspense fallback={<PageSpinner />}><About /></Suspense>} />
           <Route path="/terms"   element={<Suspense fallback={<PageSpinner />}><Terms /></Suspense>} />
-          <Route path="/api-docs" element={<Suspense fallback={<PageSpinner />}><ApiDocs /></Suspense>} />
-          <Route path="*"        element={<Suspense fallback={<PageSpinner />}><NotFound /></Suspense>} />
+          <Route path="/api-docs"          element={<Suspense fallback={<PageSpinner />}><ApiDocs /></Suspense>} />
+          <Route path="/settings"          element={<Suspense fallback={<PageSpinner />}><Settings /></Suspense>} />
+          <Route path="/admin"             element={<Suspense fallback={<PageSpinner />}><AdminDash /></Suspense>} />
+          <Route path="/docs/architecture" element={<Suspense fallback={<PageSpinner />}><Architecture /></Suspense>} />
+          <Route path="*"                  element={<Suspense fallback={<PageSpinner />}><NotFound /></Suspense>} />
         </Routes>
     </PageLoader>
   );
